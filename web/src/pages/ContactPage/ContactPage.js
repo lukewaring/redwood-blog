@@ -5,9 +5,11 @@ import {
   Submit,
   FieldError,
   Label,
+  FormError,
 } from '@redwoodjs/web'
 import { useMutation } from '@redwoodjs/web'
 import BlogLayout from 'src/layouts/BlogLayout'
+import { useForm } from 'react-hook-form'
 
 const CREATE_CONTACT = gql`
   mutation CreateContactMutation($input: ContactInput!) {
@@ -18,16 +20,32 @@ const CREATE_CONTACT = gql`
 `
 
 const ContactPage = () => {
-  const [create] = useMutation(CREATE_CONTACT)
+  const [create, { loading, error }] = useMutation(CREATE_CONTACT, {
+    onCompleted: () => {
+      alert('Thank you for your submission!')
+      formMethods.reset()
+    },
+  })
 
   const onSubmit = (data) => {
     create({ variables: { input: data } })
     console.log(data)
   }
 
+  const formMethods = useForm({ mode: 'onBlur' })
+
   return (
     <BlogLayout>
-      <Form onSubmit={onSubmit} validation={{ mode: 'onBlur' }}>
+      <Form
+        onSubmit={onSubmit}
+        validation={{ mode: 'onBlur' }}
+        error={error}
+        formMethods={formMethods}
+      >
+        <FormError
+          error={error}
+          wrapperStyle={{ color: 'red', backgroundColor: 'lavenderblush' }}
+        />
         <Label
           name="name"
           style={{ display: 'block' }}
@@ -42,7 +60,6 @@ const ContactPage = () => {
           validation={{ required: true }}
         />
         <FieldError name="name" style={{ color: 'red' }} />
-
         <Label
           name="email"
           style={{ display: 'block' }}
@@ -63,7 +80,6 @@ const ContactPage = () => {
           }}
         />
         <FieldError name="email" style={{ color: 'red' }} />
-
         <Label
           name="message"
           style={{ display: 'block' }}
@@ -78,8 +94,9 @@ const ContactPage = () => {
           validation={{ required: true }}
         />
         <FieldError name="message" style={{ color: 'red' }} />
-
-        <Submit style={{ display: 'block' }}>Save</Submit>
+        <Submit style={{ display: 'block' }} disabled={loading}>
+          Save
+        </Submit>
       </Form>
     </BlogLayout>
   )
